@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A.Flow</title>
+<meta name="description" content="A.Flow — 코스피·미국 증시·금리·환율·원자재와 투자자별 돈의 흐름을 평일 하루 두 번 모아 읽는 시장 상황판">
+<meta name="theme-color" content="#eef2f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1422" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314233d'/%3E%3Cpath d='M5 21 C10 21 11 11 16 11 S22 21 27 21' fill='none' stroke='%23f2a541' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='27' cy='21' r='2.6' fill='%23ffffff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="mark" href="#top" aria-label="A.Flow 처음으로">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" class="mk-bg"/><path d="M5 21 C10 21 11 11 16 11 S22 21 27 21" class="mk-wave"/><circle cx="27" cy="21" r="2.6" class="mk-dot"/></svg>
+      <span>A<b>.</b>Flow</span>
+    </a>
+    <nav class="nav" aria-label="섹션">
+      <a href="#radar">레이더</a><a href="#flow">수급</a><a href="#board">지표</a><a href="#top10">대형주</a><a href="#kospi">코스피</a><a href="#log">일지</a>
+    </nav>
+    <p class="stamp"><span class="stamp-label">기준 </span><time id="stamp">—</time></p>
+    <button type="button" class="refresh" id="refresh" aria-label="최신 시세로 새로고침">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 10a6.5 6.5 0 1 1-1.9-4.6"/><path d="M16.8 3.2v3.6h-3.6"/></svg>
+      <span>새로고침</span>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero wrap" id="radar" aria-labelledby="hero-title">
+    <div class="hero-text">
+      <p class="eyebrow">A.Flow · 오늘의 시장, 네 가지 기준으로</p>
+      <h1 id="hero-title">지금 레이더에서 가장 크게 튀어나온 것은 <em id="top-axis">—</em>입니다.</h1>
+      <p class="lead" id="lead">시세를 불러오는 중입니다.</p>
+      <ul class="axes" id="axes" aria-label="레이더 네 축의 값"></ul>
+    </div>
+    <figure class="scope">
+      <svg id="scope" viewBox="0 0 360 360" role="img" aria-label="금리, 환율, 고점 대비, 수급 네 축의 부담 정도를 나타낸 레이더"></svg>
+      <figcaption>바깥으로 갈수록 시장이 받는 부담이 큽니다. 점선 고리는 50점입니다.</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap sec" id="flow" aria-labelledby="flow-title">
+    <div class="sec-head">
+      <h2 id="flow-title">코스피 돈의 흐름, 최근 2년</h2>
+      <p><b>코스피(유가증권시장) 주식</b>에서 외국인·기관·개인이 판 돈과 산 돈을 하루하루 더해 온 누적 금액입니다(조 원, 매매 금액 기준). 선이 내려가면 그동안 판 쪽이 많았다는 뜻입니다.</p>
+    </div>
+    <p class="flow-lead" id="flow-lead">—</p>
+    <div class="flow-charts">
+      <figure class="card-chart" id="flow-all">
+        <figcaption><b>주체별 누적 순매수</b><span id="flow-all-range"></span></figcaption>
+        <div class="legend" id="flow-legend"></div>
+        <div class="chart-box" id="flow-all-chart"></div>
+      </figure>
+      <figure class="card-chart" id="flow-foreign">
+        <figcaption><b>외국인 누적 순매수와 20일 평균</b><span>20일 평균은 최근 20거래일 누적값의 평균선입니다</span></figcaption>
+        <div class="fbox" id="fbox"></div>
+        <div class="chart-box" id="flow-foreign-chart"></div>
+      </figure>
+    </div>
+    <h3 class="sub-h">코스피 최근 20거래일 하루하루</h3>
+    <p class="sub-p">코스피(유가증권시장) 주식의 하루 순매수입니다. 코스닥·선물은 들어 있지 않습니다. 막대가 위로 빨가면 그날 순매수, 아래로 파라면 순매도입니다.</p>
+    <div class="flows" id="flows"></div>
+  </section>
+
+  <section class="band" id="board" aria-labelledby="board-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="board-title">지표 한눈에</h2>
+        <p>큰 숫자는 현재값, 옆은 전일 대비, 선은 최근 60거래일입니다. 한국식으로 오르면 빨강, 내리면 파랑입니다.</p>
+      </div>
+      <h3 class="sub-h">국내 시장과 오늘 매매 주체</h3>
+      <p class="sub-p">각 시장에서 오늘 개인·외국인·기관이 사고판 금액(억 원)입니다. 야간선물은 매매 주체 자료가 없어 시세만 보여 줍니다.</p>
+      <div class="tiles tiles-kr" id="tiles-kr"></div>
+      <h3 class="sub-h sub-gap">해외 · 금리 · 환율 · 원자재</h3>
+      <div class="tiles tiles-world" id="tiles"></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" id="top10" aria-labelledby="top-title">
+    <div class="sec-head">
+      <h2 id="top-title">코스피를 끄는 큰 배 열 척</h2>
+      <p>시가총액 상위 10종목입니다. 막대는 1위 대비 덩치, 거래대금은 오늘 거래된 금액입니다.</p>
+    </div>
+    <div class="table-wrap">
+      <table class="top">
+        <thead><tr><th scope="col">순위</th><th scope="col">종목</th><th scope="col" class="r">현재가</th><th scope="col" class="r">등락</th><th scope="col">시가총액</th><th scope="col" class="r hide-s">거래대금</th></tr></thead>
+        <tbody id="top-body"></tbody>
+      </table>
+    </div>
+    <p class="fine" id="top-time"></p>
+  </section>
+
+  <section class="wrap sec" id="kospi" aria-labelledby="kospi-title">
+    <div class="sec-head">
+      <h2 id="kospi-title">코스피 2년, 고점에서 얼마나 내려왔나</h2>
+      <p>주마다 마지막 종가를 이었습니다. 점선은 52주 최고치, 아래 칠한 부분은 고점에서 떨어진 폭입니다.</p>
+    </div>
+    <div class="kospi-facts" id="kfacts"></div>
+    <div class="chart" id="kchart"></div>
+  </section>
+
+  <section class="wrap sec" id="log" aria-labelledby="log-title">
+    <div class="sec-head">
+      <h2 id="log-title">운영 일지</h2>
+      <p>수집할 때마다 숫자를 읽고 짧게 적습니다. 사실과 다음에 볼 지점만 적고, 사고팔라는 말은 적지 않습니다.</p>
+    </div>
+    <ol class="log" id="journal"></ol>
+  </section>
+
+  <section class="wrap sec" id="how" aria-labelledby="how-title">
+    <details>
+      <summary id="how-title">레이더 읽는 법</summary>
+      <dl class="how">
+        <dt>금리</dt><dd>미 국채 10년물 금리. 3.5%면 0점, 5.5%면 100점으로 나눴습니다. 금리가 오르면 주식의 몸값이 눌립니다.</dd>
+        <dt>환율</dt><dd>원/달러 환율. 1,200원이면 0점, 1,500원이면 100점입니다. 원화가 약하면 외국인 자금이 빠지기 쉽습니다.</dd>
+        <dt>고점 대비</dt><dd>코스피가 52주 최고치보다 얼마나 아래인지. 0%면 0점, −50%면 100점입니다.</dd>
+        <dt>수급</dt><dd>그날 코스피에서 외국인과 기관이 함께 산 금액. +5,000억 원이면 0점, −5,000억 원이면 100점입니다.</dd>
+      </dl>
+      <p class="fine">점수의 끝값은 이 사이트가 정한 참고선이고 투자 판단 기준이 아닙니다.</p>
+    </details>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>시세 출처: 네이버 금융 공개 시세. 나스닥100 선물·유가·금은 10분 지연, 환율은 하나은행 고시 기준입니다. 평일 아침(미국장 마감 뒤)과 오후(한국장 마감 뒤)에 자동으로 갱신합니다.</p>
+    <p>A.Flow는 시장 상황을 정리한 정보이며 투자 권유가 아닙니다. 숫자는 늦거나 틀릴 수 있으니 거래 전에는 증권사 시세를 확인하세요.</p>
+  </div>
+</footer>
+
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
