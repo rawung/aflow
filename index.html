@@ -19,7 +19,7 @@
       <span>A<b>.</b>Flow</span>
     </a>
     <nav class="nav" aria-label="섹션">
-      <a href="#radar">레이더</a><a href="#flow">수급</a><a href="#board">지표</a><a href="#top10">대형주</a><a href="#kospi">코스피</a><a href="#log">일지</a>
+      <a href="#radar">레이더</a><a href="#fear">공포지수</a><a href="#flow">수급</a><a href="#board">지표</a><a href="#top10">대형주</a><a href="#kospi">코스피</a><a href="#log">일지</a>
     </nav>
     <p class="stamp"><span class="stamp-label">기준 </span><time id="stamp">—</time></p>
     <button type="button" class="refresh" id="refresh" aria-label="최신 시세로 새로고침">
@@ -41,6 +41,33 @@
       <svg id="scope" viewBox="0 0 360 360" role="img" aria-label="금리, 환율, 고점 대비, 수급 네 축의 부담 정도를 나타낸 레이더"></svg>
       <figcaption>바깥으로 갈수록 시장이 받는 부담이 큽니다. 점선 고리는 50점입니다.</figcaption>
     </figure>
+  </section>
+
+  <section class="wrap sec" id="fear" aria-labelledby="fear-title">
+    <div class="sec-head">
+      <h2 id="fear-title">공포지수, 시장은 지금 얼마나 겁먹었나</h2>
+      <p>미국 시장의 심리를 재는 두 가지 지표입니다. CNN 공포·탐욕 지수는 0에 가까울수록 공포, 100에 가까울수록 탐욕입니다. VIX는 S&amp;P 500 옵션으로 계산한 앞으로 30일 변동성 예상치로, 높을수록 불안합니다.</p>
+    </div>
+    <div class="fear-grid">
+      <figure class="card-chart" id="fg-card">
+        <figcaption><b>CNN 공포·탐욕 지수</b><span id="fg-time"></span></figcaption>
+        <div class="fg-top">
+          <svg class="gauge" id="fg-gauge" viewBox="0 0 240 140" role="img" aria-label="CNN 공포·탐욕 지수 게이지"></svg>
+          <div class="fg-read"><b class="fg-score" id="fg-score">—</b><span class="fg-rating" id="fg-rating">—</span></div>
+        </div>
+        <dl class="fg-past" id="fg-past"></dl>
+        <div class="chart-box" id="fg-chart"></div>
+      </figure>
+      <figure class="card-chart" id="vix-card">
+        <figcaption><b>VIX 변동성지수</b><span id="vix-time"></span></figcaption>
+        <div class="fg-top vix-top">
+          <div class="fg-read"><b class="fg-score" id="vix-value">—</b><span class="fg-rating" id="vix-level">—</span></div>
+          <p class="vix-chg" id="vix-chg"></p>
+        </div>
+        <p class="vix-scale">15 미만 안정 · 15~20 보통 · 20~30 불안 · 30 이상 공포 <small>(이 사이트의 참고 구분)</small></p>
+        <div class="chart-box" id="vix-chart"></div>
+      </figure>
+    </div>
   </section>
 
   <section class="wrap sec" id="flow" aria-labelledby="flow-title">

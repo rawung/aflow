@@ -208,6 +208,31 @@ h2 { margin: 0; font-size: clamp(22px, 2.6vw, 28px); font-weight: 700; letter-sp
 .bar-hit { fill: transparent; }
 .bar-date { fill: var(--ink-2); font-size: 11px; }
 
+/* 공포지수 */
+.fear-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.fg-top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.gauge { width: 220px; max-width: 100%; height: auto; flex: none; }
+.g-band { stroke-width: 18; fill: none; }
+.g-needle { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.g-hub { fill: var(--ink); }
+.g-tick { fill: var(--ink-2); font-size: 10px; }
+.fg-read { display: grid; gap: 2px; }
+.fg-score { font-size: 44px; font-weight: 800; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.fg-rating { font-size: 16px; font-weight: 700; }
+.fg-past { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; font-variant-numeric: tabular-nums; }
+.fg-past div { display: grid; gap: 1px; border-top: 1px solid var(--line); padding-top: 6px; }
+.fg-past dt { font-size: 12px; color: var(--ink-2); } .fg-past dd { margin: 0; font-weight: 700; }
+.fg-past dd small { font-weight: 500; color: var(--ink-2); margin-left: 3px; font-size: 11px; }
+.vix-chg { margin: 0; font-size: 14px; color: var(--ink-2); }
+.vix-scale { margin: 0; font-size: 12px; color: var(--ink-2); }
+.vix-scale small { font-size: 11px; }
+.lvl-xfear { --c: #d23c3c; } .lvl-fear { --c: #e8833a; } .lvl-neutral { --c: #9aa3b0; } .lvl-greed { --c: #6cbf73; } .lvl-xgreed { --c: #1f9a5e; }
+.fg-rating, .fg-score { color: var(--c, var(--ink)); }
+.ref-line { stroke-dasharray: 4 4; stroke-width: 1; }
+.ref-label { font-size: 11px; }
+@media (max-width: 860px) { .fear-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 420px) { .fg-past { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 /* 대형주 표 */
 .table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); }
 .top { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 15px; }

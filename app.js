@@ -76,15 +76,15 @@
   });
 
   const optional = (name) => load(name).catch(() => null);   // 없어도 나머지 화면은 그린다
-  Promise.all([...['snapshot', 'history', 'kospi', 'journal'].map(load), optional('flows'), optional('top'), optional('investors'), optional('night')])
-    .then(([snap, hist, kospi, journal, flows, top, investors, night]) => { render(snap, hist, kospi, journal, investors, night); renderFlows(flows); renderTop(top); })
+  Promise.all([...['snapshot', 'history', 'kospi', 'journal'].map(load), optional('flows'), optional('top'), optional('investors'), optional('night'), optional('fear')])
+    .then(([snap, hist, kospi, journal, flows, top, investors, night, fear]) => { render(snap, hist, kospi, journal, investors, night, fear); renderFlows(flows); renderTop(top); })
     .catch((e) => {
       $('#lead').textContent = '시세 파일을 불러오지 못했습니다. 잠시 뒤 새로고침해 주세요.';
       const box = el('p', { class: 'error' }, e.message);
       $('#lead').after(box);
     });
 
-  function render(snap, hist, kospi, journal, investors, night) {
+  function render(snap, hist, kospi, journal, investors, night, fear) {
     const by = Object.fromEntries(snap.rows.map((r) => [r.key, r]));
     const series = (key) => hist.rows.filter((r) => r.key === key && r.close != null)
       .map((r) => ({ date: parseDay(r.date), close: +r.close })).sort((a, b) => a.date - b.date);
@@ -128,6 +128,8 @@
       return li;
     }));
     drawScope(scores);
+
+    renderFear(fear, by.VIX, series('VIX'));
 
     // 지표 카드 (국내 시장 카드에는 오늘 매매 주체를 붙인다)
     const inv = Object.fromEntries((investors?.rows || []).map((r) => [r.key, r]));
@@ -215,6 +217,112 @@
       clearTimeout(rt);
       rt = setTimeout(() => { document.querySelectorAll('.tile').forEach((c) => c._draw()); drawK(); }, 150);
     });
+  }
+
+  // 공포지수: CNN 공포·탐욕 게이지와 1년 추이, VIX 와 60거래일 추이
+  const FG = [ // 구간 끝값과 이름 (CNN 기준)
+    { to: 25, cls: 'lvl-xfear', name: '극단적 공포', c: '#d23c3c' },
+    { to: 45, cls: 'lvl-fear', name: '공포', c: '#e8833a' },
+    { to: 55, cls: 'lvl-neutral', name: '중립', c: '#9aa3b0' },
+    { to: 75, cls: 'lvl-greed', name: '탐욕', c: '#6cbf73' },
+    { to: 100, cls: 'lvl-xgreed', name: '극단적 탐욕', c: '#1f9a5e' },
+  ];
+  const fgLevel = (v) => FG.find((b) => v <= b.to) || FG[FG.length - 1];
+  const VIXL = [{ to: 15, cls: 'lvl-xgreed', name: '안정' }, { to: 20, cls: 'lvl-neutral', name: '보통' }, { to: 30, cls: 'lvl-fear', name: '불안' }, { to: Infinity, cls: 'lvl-xfear', name: '공포' }];
+
+  function renderFear(fear, vix, vixSeries) {
+    const card = $('#fg-card');
+    const now = fear?.now;
+    if (now) {
+      const lv = fgLevel(now.score);
+      card.classList.remove(...FG.map((b) => b.cls)); card.classList.add(lv.cls);
+      $('#fg-score').textContent = fmt(now.score, 0);
+      $('#fg-rating').textContent = lv.name;
+      $('#fg-time').textContent = `기준 ${now.time} (한국 시간) · CNN`;
+      drawGauge($('#fg-gauge'), now.score);
+      $('#fg-past').replaceChildren(...[['전일', now.prev_close], ['1주 전', now.week], ['1달 전', now.month], ['1년 전', now.year]].map(([a, v]) => {
+        const d = el('div'); const dd = el('dd', {}, fmt(v, 0)); dd.append(el('small', {}, fgLevel(v).name));
+        d.append(el('dt', {}, a), dd); return d;
+      }));
+      const rows = (fear.rows || []).filter((r) => r.score != null);
+      if (rows.length > 1) {
+        const draw = () => drawSeries($('#fg-chart'), rows.map((r) => parseDay(r.date)), rows.map((r) => +r.score), {
+          lo: 0, hi: 100, ticks: [0, 25, 50, 75, 100], color: 'var(--ink)', d: 0, label: 'CNN 공포·탐욕 지수 최근 1년',
+          bands: FG.map((b, i) => ({ from: i ? FG[i - 1].to : 0, to: b.to, c: b.c })), tip: (v) => `${fmt(v, 0)} ${fgLevel(v).name}`,
+        });
+        draw(); onResize(draw);
+      }
+    } else {
+      $('#fg-score').textContent = '—'; $('#fg-rating').textContent = '자료를 받지 못했습니다';
+    }
+
+    const vcard = $('#vix-card');
+    if (vix) {
+      const lv = VIXL.find((b) => vix.value < b.to);
+      vcard.classList.remove(...VIXL.map((b) => b.cls)); vcard.classList.add(lv.cls);
+      $('#vix-value').textContent = fmt(vix.value, 2);
+      $('#vix-level').textContent = lv.name;
+      $('#vix-time').textContent = `기준 ${vix.time} (한국 시간) · CBOE, 네이버 금융 15분 지연`;
+      const c = $('#vix-chg'); c.replaceChildren('전일 대비 ', el('b', { class: tone(vix.chg) }, `${signed(vix.chg, 2)} (${signed(vix.pct, 2, '%')})`));
+      if (vixSeries.length > 1) {
+        const vals = vixSeries.map((s) => s.close);
+        const draw = () => drawSeries($('#vix-chart'), vixSeries.map((s) => s.date), vals, {
+          lo: Math.min(10, ...vals) - 1, hi: Math.max(32, ...vals) + 2, color: 'var(--ink)', d: 2, label: 'VIX 최근 60거래일',
+          refs: [{ v: 20, label: '20 불안' }, { v: 30, label: '30 공포' }], tip: (v) => `${fmt(v, 2)} ${VIXL.find((b) => v < b.to).name}`,
+        });
+        draw(); onResize(draw);
+      }
+    } else {
+      $('#vix-value').textContent = '—'; $('#vix-level').textContent = '자료를 받지 못했습니다';
+    }
+  }
+
+  const onResize = (fn) => { let w0 = window.innerWidth, t; window.addEventListener('resize', () => { if (window.innerWidth === w0) return; w0 = window.innerWidth; clearTimeout(t); t = setTimeout(fn, 150); }); };
+
+  function drawGauge(svg, score) {
+    svg.replaceChildren();
+    const cx = 120, cy = 120, r = 92;
+    const pt = (v, rr = r) => { const a = Math.PI * (1 - v / 100); return [cx + rr * Math.cos(a), cy - rr * Math.sin(a)]; };
+    FG.forEach((b, i) => {
+      const from = i ? FG[i - 1].to : 0;
+      const [x0, y0] = pt(from + 0.6), [x1, y1] = pt(b.to - 0.6);
+      const p = el('svg:path', { class: 'g-band', d: `M${x0},${y0} A${r},${r} 0 0 1 ${x1},${y1}` }); p.style.stroke = b.c; svg.append(p);
+    });
+    [0, 25, 50, 75, 100].forEach((v) => { const [x, y] = pt(v, r + 18); svg.append(el('svg:text', { class: 'g-tick', x, y: y + 3, 'text-anchor': 'middle' }, String(v))); });
+    const [nx, ny] = pt(Math.max(0, Math.min(100, score)), r - 14);
+    svg.append(el('svg:line', { class: 'g-needle', x1: cx, y1: cy, x2: nx, y2: ny }), el('svg:circle', { class: 'g-hub', cx, cy, r: 6 }));
+  }
+
+  // 한 줄 선 그래프 (공포지수용): 배경 구간 색, 기준선, 가리키면 값
+  function drawSeries(box, dates, values, o) {
+    box.replaceChildren();
+    const W = Math.max(280, box.clientWidth), H = W < 480 ? 200 : 220;
+    const m = { t: 10, r: 12, b: 26, l: 36 };
+    const t0 = dates[0], t1 = dates[dates.length - 1];
+    const x = (d) => m.l + ((d - t0) / (t1 - t0 || 1)) * (W - m.l - m.r);
+    const y = (v) => m.t + ((o.hi - v) / (o.hi - o.lo || 1)) * (H - m.t - m.b);
+    const svg = el('svg:svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': o.label });
+    (o.bands || []).forEach((b) => { const r = el('svg:rect', { x: m.l, width: W - m.l - m.r, y: y(b.to), height: y(b.from) - y(b.to) }); r.style.fill = b.c; r.style.opacity = '.12'; svg.append(r); });
+    const ax = el('svg:g', { class: 'ax' });
+    (o.ticks || niceTicks(o.lo, o.hi, 4)).forEach((v) => {
+      ax.append(el('svg:line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v) }));
+      ax.append(el('svg:text', { x: m.l - 6, y: y(v) + 4, 'text-anchor': 'end' }, nf(0).format(v)));
+    });
+    let lastKey = '';
+    const span = (t1 - t0) / 864e5, every = span > 200 ? (W < 480 ? 4 : 2) : 1;
+    dates.forEach((d) => {
+      const mo = d.getUTCMonth(), key = `${d.getUTCFullYear()}-${mo}`;
+      if (key !== lastKey) { lastKey = key; const px = x(d); if (mo % every === 0 && px > m.l + 12 && px < W - m.r - 12) ax.append(el('svg:text', { x: px, y: H - 8, 'text-anchor': 'middle' }, `${String(d.getUTCFullYear()).slice(2)}.${String(mo + 1).padStart(2, '0')}`)); }
+    });
+    svg.append(ax);
+    (o.refs || []).forEach((r) => {
+      const l = el('svg:line', { class: 'ref-line', x1: m.l, x2: W - m.r, y1: y(r.v), y2: y(r.v) }); l.style.stroke = 'var(--ink-2)'; svg.append(l);
+      const t = el('svg:text', { class: 'ref-label', x: m.l + 4, y: y(r.v) - 4, 'text-anchor': 'start' }, r.label); t.style.fill = 'var(--ink-2)'; svg.append(t);
+    });
+    const p = el('svg:path', { class: 'ln', d: values.map((v, i) => `${i ? 'L' : 'M'}${x(dates[i]).toFixed(1)},${y(v).toFixed(1)}`).join('') }); p.style.stroke = o.color; svg.append(p);
+    const end = el('svg:circle', { cx: x(t1), cy: y(values[values.length - 1]), r: 3.5 }); end.style.fill = o.color; svg.append(end);
+    box.append(svg);
+    hover(svg, dates.map((d, i) => ({ date: d, close: values[i] })), x, y, (v) => `${dayText(v.date)}  ${o.tip ? o.tip(v.close) : fmt(v.close, o.d)}`, 'k-hover');
   }
 
   // 돈의 흐름: 2년 누적 선 그래프 두 개 + 최근 20거래일 막대
